@@ -1,5 +1,5 @@
 # PatchRD
-Code for ECCV 2022 paper PatchRD: Detail-Preserving Shape Completion by Learning Patch Retrieval and Deformation. (PDF will be released soon!)
+Code for ECCV 2022 paper PatchRD: Detail-Preserving Shape Completion by Learning Patch Retrieval and Deformation. ([PDF](https://arxiv.org/pdf/2207.11790.pdf))
 <p align="center"> 
 <img src="Teaser.png">
 </p>
