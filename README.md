@@ -68,17 +68,8 @@ This step joinly learn the deformation and blending. Run
 ## Evaluation 
 After training all four networks, you can run the following scripts to run the completion results from a randomly cropped shape. You can find the input and output mesh in `./samples_joint`. 
 ```
-test_patch.sh
-```
-
-```
-test_deform.sh
-```
-
-```
 test_joint.sh
 ```
-Since this process is a bit slow, we set the flag `--small_dataset` as True to only test on four samples. If you want to test on the whole dataset, you can turn off this flag. 
 
 
 ## Citation 
