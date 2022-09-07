@@ -7,7 +7,7 @@ python main.py \
 --checkpoint_dir checkpoint_joint \
 --log_dir logs/joint \
 --gpu 0 \
---epoch 5 \
+--epoch 1 \
 --lr 2e-4 \
 --g_dim 32 \
 --gw_dim 32 \
@@ -18,8 +18,8 @@ python main.py \
 --trans_limit 2.0 \
 --w_s 10 \
 --train_joint \
---model_name joint \
---dump_deform_path ./dump_deform/chair \
+--model_name chair_model0 \
+--dump_deform_path ./dump_deform/chair/model0 \
 #--small_dataset \
 #--compute_cd \
 #--continue_train \

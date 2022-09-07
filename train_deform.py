@@ -109,7 +109,18 @@ class MODEL_DEFORM(object):
             fin.close()
 
             self.dataset_len = len(self.dataset_names)
-            self.dataset_len = 500 
+            self.dataset_len = 1000
+            
+            if self.mode=='test':
+                self.dataset_len = 200
+            
+            if self.dump_deform and self.mode=='train':
+                fin2 = open("splits/"+self.data_content+"_test.txt")
+                test_names = [name.strip() for name in fin.readlines()]
+                fin2.close()
+                self.dataset_names = self.dataset_names + test_names[:200]
+                self.dataset_len += 200
+
             if self.small_dataset:
                 self.dataset_len = 4
 
@@ -214,7 +225,7 @@ class MODEL_DEFORM(object):
         if self.pred_coarse:
             print('coarse predictor', self.data_content)
             if self.data_content =='content_chair':
-                checkpoint = torch.load('checkpoint_complete/content_chair_complete/chair/checkpoint-80.pth')
+                checkpoint = torch.load('checkpoint_complete/content_chair_complete/coarse_comp/checkpoint-90.pth')
             elif self.data_content=='content_boat':
                 checkpoint = torch.load('checkpoint_complete/content_boat_complete/coarse_comp/checkpoint-90.pth')
             elif self.data_content=='content_lamp':
@@ -299,7 +310,7 @@ class MODEL_DEFORM(object):
             else:
                 p = prob
 
-        if p<=0.4 and c_locs is None:
+        if (p<=0.4 or not self.data_content=='content_chair') and c_locs is None:
             while(vox[loc_starts[0]:loc_starts[0]+csize[0], loc_starts[1]:loc_starts[1]+csize[1],\
                 loc_starts[2]:loc_starts[2]+csize[2],].sum()<30):
                 csize = crop_size + (np.random.rand(3)-0.5)*c_range
@@ -309,44 +320,23 @@ class MODEL_DEFORM(object):
                 loc_starts[1] = np.random.randint(0, vy-csize[1])
                 loc_starts[2] = np.random.randint(0, vz-csize[2])
         elif c_locs is None:
-            if self.data_content=='content_chair':
-                cnt=0
-                while(edges[loc_starts[0]+csize[0]//2,loc_starts[1]+csize[1]//2,loc_starts[2]+csize[2]//2,]<0.4 \
-                    or vox[loc_starts[0]:loc_starts[0]+csize[0], loc_starts[1]:loc_starts[1]+csize[1],\
-                    loc_starts[2]:loc_starts[2]+csize[2],].sum()<30 or loc_starts[1]<vy/2):
+            cnt=0
+            while(vox[loc_starts[0]:loc_starts[0]+csize[0], loc_starts[1]:loc_starts[1]+csize[1],\
+                loc_starts[2]:loc_starts[2]+csize[2],].sum()<50 or loc_starts[1]<vy/2):
 
-                    csize = crop_size + (np.random.rand(3)-0.5)*c_range
-                    csize[0] = min(vx-16, csize[0])
-                    csize[1] = min(vy-16, csize[1])
-                    csize[2] = min(vz-16, csize[2])
-                    csize = csize.astype(np.int32)
+                csize = crop_size + (np.random.rand(3)-0.5)*c_range
+                csize[0] = min(vx-16, csize[0])
+                csize[1] = min(vy-16, csize[1])
+                csize[2] = min(vz-16, csize[2])
+                csize = csize.astype(np.int32)
 
-                    loc_starts[0] = np.random.randint(0, vx-csize[0])
-                    loc_starts[1] = np.random.randint(0, vy-csize[1])
-                    loc_starts[2] = np.random.randint(0, vz-csize[2])
+                loc_starts[0] = np.random.randint(0, vx-csize[0])
+                loc_starts[1] = np.random.randint(0, vy-csize[1])
+                loc_starts[2] = np.random.randint(0, vz-csize[2])
 
-                    cnt+=1
-                    if cnt>10:
-                        break
-            else:
-                cnt = 0
-                while(edges[loc_starts[0]+csize[0]//2,loc_starts[1]+csize[1]//2,loc_starts[2]+csize[2]//2,]<0.2 \
-                    or vox[loc_starts[0]:loc_starts[0]+csize[0], loc_starts[1]:loc_starts[1]+csize[1],\
-                    loc_starts[2]:loc_starts[2]+csize[2],].sum()<30 ):
-
-                    csize = crop_size + (np.random.rand(3)-0.5)*c_range
-                    csize[0] = min(vx-16, csize[0])
-                    csize[1] = min(vy-16, csize[1])
-                    csize[2] = min(vz-16, csize[2])
-                    csize = csize.astype(np.int32)
-
-                    loc_starts[0] = np.random.randint(0, vx-csize[0])
-                    loc_starts[1] = np.random.randint(0, vy-csize[1])
-                    loc_starts[2] = np.random.randint(0, vz-csize[2])
-                    
-                    cnt += 1 
-                    if cnt>10:
-                        break
+                cnt+=1
+                if cnt>10:
+                    break
 
         else:
             loc_starts = c_locs[0:3]
@@ -730,9 +720,13 @@ class MODEL_DEFORM(object):
 
         if config.continue_train or self.mode=='test':
             self.load()
+        
 
         start_time = time.time()
         training_epoch = config.epoch
+        if self.mode=='test':
+            training_epoch += 1 
+
         self.dataset_len = len(self.input_content)
         batch_index_list = np.arange(self.dataset_len)
 
@@ -902,6 +896,9 @@ class MODEL_DEFORM(object):
                 loss.backward()
                 self.optimizer.step()
             
+            if self.mode=='test':
+                return 
+
             self.log_string("Epoch: [%d/%d] time: %.0f, loss_recons: %.5f, loss_dis: %.4f, iou:  %.5f," % \
                 (epoch, training_epoch, time.time() - start_time, loss_de.item(), loss_dis.item(), \
                  torch.mean(iou_pred).item()))

@@ -6,7 +6,7 @@ python main.py \
 --sample_dir samples_patch \
 --checkpoint_dir checkpoint_patch \
 --gpu 0 \
---epoch 200 \
+--epoch 250 \
 --lr 1e-4 \
 --z_dim 128 \
 --g_dim 32 \
@@ -16,8 +16,8 @@ python main.py \
 --c_range 26  \
 --max_sample_num 400 \
 --train_patch \
---model_name retrieval \
---dump_deform_path ./dump_deform/chair \
+--model_name chair_model0 \
+--dump_deform_path ./dump_deform/chair/model0 \
 #--dump_deform \
 #--small_dataset \
 #--continue_train \

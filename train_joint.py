@@ -77,7 +77,7 @@ class MODEL_JOINT(object):
 
         self.checkpoint_dir = config.checkpoint_dir
         self.data_dir = config.data_dir
-        self.c3d_data_dir = '/scratch/cluster/bosun/detailization/data/completion3d/train/gt/%s'%(self.data_dir[-9:])
+        self.c3d_data_dir = './data/completion3d/train/gt/%s'%(self.data_dir[-9:])
 
         self.dump_deform_path = config.dump_deform_path
 
@@ -118,8 +118,8 @@ class MODEL_JOINT(object):
             self.dataset_names = [name.strip() for name in fin.readlines()]
             fin.close()
 
-            self.dataset_len = len(self.dataset_names)
-            self.dataset_len = 1000
+            #self.dataset_len = len(self.dataset_names)
+            self.dataset_len = 200
             if self.small_dataset:
                 self.dataset_len = 4
 
@@ -264,7 +264,7 @@ class MODEL_JOINT(object):
             fin.close()
 
             self.test_dataset_len = len(self.dataset_names_test)
-            self.test_dataset_len = 100
+            self.test_dataset_len = 50
             if self.small_dataset:
                 self.test_dataset_len = 4
 
@@ -1054,9 +1054,6 @@ class MODEL_JOINT(object):
 
         points = points - pt_mean
         pc = pc - (pc.max(0)+pc.min(0))/2
-        # points = points - points.min(0)
-        # pc = pc - pc.min(0)
-        # points = pc.max(0)*points/points.max(0)
 
         pc_pred = torch.from_numpy(points).float().to(self.device).unsqueeze(0)
         pc_gt = torch.from_numpy(pc).float().to(self.device).unsqueeze(0)
@@ -1429,9 +1426,7 @@ class MODEL_JOINT(object):
 
                             gt_wd = gt_test[0,0,loc_starts[0]:loc_ends[0], loc_starts[1]:loc_ends[1], loc_starts[2]:loc_ends[2]]
                             gt_wd = F.pad(gt_wd, (0, max(0, loc_ends[2]-vz), 0, max(0, loc_ends[1]-vy), 0, max(0, loc_ends[0]-vx)))
-                            #loss_recons = torch.sum((gt_wd-blended_out)**2)/(torch.sum(gt_wd**2)+torch.sum(blended_out)+1e-5)
                             loss_recons = torch.sum(torch.abs(gt_wd-blended_out))/(torch.sum(gt_wd) + torch.sum(blended_out)+1e-5)
-                            # loss_recons = self.get_recons_loss(blended_out, gt_train, loc_starts, loc_ends)
                             loss_smooth = self.get_smooth_loss(voxel_out, X_pred[0], loc_mask, loc_starts, loc_ends)
 
                             out_shape[loc_starts[0]:loc_ends[0], loc_starts[1]:loc_ends[1],loc_starts[2]:loc_ends[2],]= \
@@ -1447,13 +1442,12 @@ class MODEL_JOINT(object):
                 cdis_c, coa_pc, gt_pc_c, gt_pt_mean = self.compute_cd_for_vox(self.gt_pc[dxb], self.gt_test[dxb], self.pos_test[dxb],)
                 cdis, pred_pc, gt_pc, _ = self.compute_cd_for_vox(self.gt_pc[dxb], out_shape, self.pos_test[dxb], )
                 
-                if cdis_c<=0.0002:
-                    total_cdis+= cdis
-                    total_cdis_c += cdis_c
-                    total_num+=1
+                total_cdis+= cdis
+                total_cdis_c += cdis_c
+                total_num+=1
 
-                print(dxb, self.shape_names_test[dxb], 'cdis', cdis,total_cdis/(total_num+1e-5),'cdis_gt', cdis_c, \
-                        total_cdis_c/(total_num+1e-5),)
+                print(dxb, self.shape_names_test[dxb], 'cdis', cdis, 'cdis mean', total_cdis/(total_num+1e-5) )
+                # ,'cdis_gt', cdis_c, total_cdis_c/(total_num+1e-5),)
 
                 m_vox = -gaussian_filter((out_shape>0.35).astype(np.float32), sigma=0.8)  # 0.8, 0.2, 0.35 # 0.7, 0.25
                 verts, faces, normals, values = measure.marching_cubes(m_vox, -0.2)
@@ -1475,7 +1469,7 @@ class MODEL_JOINT(object):
                 #verts, faces, normals, values = measure.marching_cubes(m_vox, -self.sampling_threshold)
                 verts, faces, normals, values = measure.marching_cubes(m_vox, -0.2)
                 mesh = Mesh(v=verts, f=faces)
-                mesh.write_ply(os.path.join(self.sample_dir, 'eval_%s_%d_%d_gt..ply'%(self.pre_fix, epoch,dxb)))
+                mesh.write_ply(os.path.join(self.sample_dir, 'eval_%s_%d_%d_gt.ply'%(self.pre_fix, epoch,dxb)))
 
 
             imgout =  np.full([self.real_size, self.real_size*5], 255, np.uint8)

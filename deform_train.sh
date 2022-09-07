@@ -3,7 +3,7 @@ python main.py \
 --data_dir ./data/03001627/ \
 --input_size 32 \
 --output_size 128 \
---sample_dir samples_deform2 \
+--sample_dir samples_deform \
 --checkpoint_dir checkpoint_deform \
 --gpu 0 \
 --epoch 100 \
@@ -16,8 +16,8 @@ python main.py \
 --c_range 26 \
 --max_sample_num 600 \
 --train_deform \
---model_name deform \
---dump_deform_path ./dump_deform/chair \
-#--small_dataset \
+--model_name chair_model0 \
+--dump_deform_path ./dump_deform/chair/model0 \
 #--dump_deform \
+#--small_dataset \
 #--continue_train \

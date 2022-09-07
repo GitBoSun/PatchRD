@@ -110,9 +110,21 @@ class MODEL_PATCH(object):
             fin.close()
 
             self.dataset_len = len(self.dataset_names)
-            self.dataset_len = 500
+            self.dataset_len = 1000
+            
+            if self.mode=='test':
+                self.dataset_len = 200
+            
+            if self.dump_deform and self.mode=='train': 
+                fin2 = open("splits/"+self.data_content+"_test.txt")
+                test_names = [name.strip() for name in fin.readlines()]
+                fin2.close()
+                self.dataset_names = self.dataset_names + test_names[:200]
+                self.dataset_len += 200 
+
             if self.small_dataset:
                 self.dataset_len = 4 
+            
 
             self.mask_content  = []
             self.input_content = []
@@ -206,7 +218,7 @@ class MODEL_PATCH(object):
         if self.pred_coarse:
             print('coarse predictor', self.data_content)
             if self.data_content =='content_chair':
-                self.dis_thres = 0.055
+                self.dis_thres = 0.035 # 0.055 
                 checkpoint = torch.load('checkpoint_complete/content_chair_complete/coarse_comp/checkpoint-90.pth')
             elif self.data_content=='content_boat':
                 self.dis_thres=0.12
@@ -301,7 +313,7 @@ class MODEL_PATCH(object):
             else:
                 p = prob
 
-        if p<=0.4 or not self.data_content=='content_chair':
+        if p<0.4 or not self.data_content=='content_chair':
             cnt=0
             while(vox[loc_starts[0]:loc_starts[0]+csize[0], loc_starts[1]:loc_starts[1]+csize[1],\
                 loc_starts[2]:loc_starts[2]+csize[2],].sum()<30 ):
@@ -319,24 +331,23 @@ class MODEL_PATCH(object):
                     break
 
         else:
-            if self.data_content=='content_chair':
-                cnt=0
-                while(vox[loc_starts[0]:loc_starts[0]+csize[0], loc_starts[1]:loc_starts[1]+csize[1],\
-                    loc_starts[2]:loc_starts[2]+csize[2],].sum()<30 or loc_starts[1]<vy/2):
+            cnt=0
+            while(vox[loc_starts[0]:loc_starts[0]+csize[0], loc_starts[1]:loc_starts[1]+csize[1],\
+                loc_starts[2]:loc_starts[2]+csize[2],].sum()<50 or loc_starts[1]<vy/2):
 
-                    csize = crop_size + (np.random.rand(3)-0.5)*c_range
-                    csize[0] = min(vx-16, csize[0])
-                    csize[1] = min(vy-16, csize[1])
-                    csize[2] = min(vz-16, csize[2])
-                    csize = csize.astype(np.int32)
+                csize = crop_size + (np.random.rand(3)-0.5)*c_range
+                csize[0] = min(vx-16, csize[0])
+                csize[1] = min(vy-16, csize[1])
+                csize[2] = min(vz-16, csize[2])
+                csize = csize.astype(np.int32)
 
-                    loc_starts[0] = np.random.randint(0, vx-csize[0])
-                    loc_starts[1] = np.random.randint(0, vy-csize[1])
-                    loc_starts[2] = np.random.randint(0, vz-csize[2])
+                loc_starts[0] = np.random.randint(0, vx-csize[0])
+                loc_starts[1] = np.random.randint(0, vy-csize[1])
+                loc_starts[2] = np.random.randint(0, vz-csize[2])
                     
-                    cnt+=1
-                    if cnt>10:
-                        break
+                cnt+=1
+                if cnt>10:
+                    break
         
         new_vox[loc_starts[0]:loc_starts[0]+csize[0], loc_starts[1]:loc_starts[1]+csize[1],\
             loc_starts[2]:loc_starts[2]+csize[2],] = 0
@@ -695,6 +706,7 @@ class MODEL_PATCH(object):
         return "{}_retriv".format(self.data_content)
 
     def train(self, config):
+        
         if self.dump_deform:
             self.mode = 'test'
 
@@ -703,6 +715,9 @@ class MODEL_PATCH(object):
 
         start_time = time.time()
         training_epoch = config.epoch
+        
+        if self.mode=='test':
+            training_epoch += 1
 
         batch_index_list = np.arange(self.dataset_len)
 
@@ -766,7 +781,6 @@ class MODEL_PATCH(object):
                             kernel_size = self.patch_size, stride = self.stride, padding = 0)
                     partial_full = self.reshape_to_size_torch(partial_tmp_in, (self.output_size,self.output_size,self.output_size))
                     
-                    ##########################
                     partial_in = partial_tmp_in
                     mask_partial_in = partial_mask_2
 
@@ -880,6 +894,7 @@ class MODEL_PATCH(object):
                         else:
                             cv2.imwrite(self.sample_dir+"/top%d_%s_%d_%d_%.3f.png"%(top_num, self.pre_fix, epoch, \
                                     self.names[dxb], iou), imgout_0)
+                
                 if self.mode=='test' and not config.continue_train:
                     continue
 
@@ -939,6 +954,9 @@ class MODEL_PATCH(object):
 
                 loss.backward()
                 self.optimizer.step()
+
+            if self.mode=='test'
+                return 
 
             self.log_string("Epoch: [%d/%d] time: %.0f, loss_rand: %.5f, loss_itent:  %.5f" % \
                 (epoch, training_epoch, time.time() - start_time, loss_rand.item(),loss_identity.item(), ))
