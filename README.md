@@ -26,6 +26,27 @@ Install the following Python dependencies (with `pip install`):
 You can download the dataset [here](https://www.dropbox.com/s/phiw7kjw7d1dfu4/data.zip?dl=0). It's a voxelized dataset for 8 classes in ShapeNet. Train/Test spliting is in `./splits`.  
 To evaluate the chamfer distance, we convert our output to point cloud and use the point cloud with 16384 points from [Completion3D](https://completion3d.stanford.edu/) dataset as the ground truth. You can either download it from the offcial website or directly [here](https://www.dropbox.com/s/e1g071m10xm7zug/completion3d.zip?dl=0).  
 
+
+## Demo with Pre-trained Models 
+You can download the pre-trained models for the chair category [here](https://www.dropbox.com/s/y6yzehq39ereekx/checkpoints_chair.zip?dl=0). 
+
+To run the completion pipeline, first **uncomment `--dump_deform`, `--mode test`, `--small_dataset` in `patch_train.sh` and `deform_train.sh`, then uncomment `--small_dataset` in `joint_test.sh`**. 
+
+Then run: 
+
+```
+./patch_train.sh
+```
+```
+./deform_train.sh
+```
+```
+./joint_test.sh
+```
+You will get the input, output meshes for a small set of samples in the `samples_joint` folder. 
+
+
+
 ## Training 
 There are four steps to train our framework. 
 The default settings train model for the chair category. You can change the arguments `--data_content` and `--data_dir` in each bash script to train on other categories. 
@@ -68,7 +89,7 @@ This step joinly learn the deformation and blending. Run
 ## Evaluation 
 After training all four networks, you can run the following scripts to run the completion results from a randomly cropped shape. You can find the input and output mesh in `./samples_joint`. 
 ```
-test_joint.sh
+./joint_test.sh
 ```
 
 
