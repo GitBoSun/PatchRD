@@ -116,7 +116,7 @@ class MODEL_DEFORM(object):
             
             if self.dump_deform and self.mode=='train':
                 fin2 = open("splits/"+self.data_content+"_test.txt")
-                test_names = [name.strip() for name in fin.readlines()]
+                test_names = [name.strip() for name in fin2.readlines()]
                 fin2.close()
                 self.dataset_names = self.dataset_names + test_names[:200]
                 self.dataset_len += 200

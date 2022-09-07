@@ -117,7 +117,7 @@ class MODEL_PATCH(object):
             
             if self.dump_deform and self.mode=='train': 
                 fin2 = open("splits/"+self.data_content+"_test.txt")
-                test_names = [name.strip() for name in fin.readlines()]
+                test_names = [name.strip() for name in fin2.readlines()]
                 fin2.close()
                 self.dataset_names = self.dataset_names + test_names[:200]
                 self.dataset_len += 200 
@@ -955,7 +955,7 @@ class MODEL_PATCH(object):
                 loss.backward()
                 self.optimizer.step()
 
-            if self.mode=='test'
+            if self.mode=='test':
                 return 
 
             self.log_string("Epoch: [%d/%d] time: %.0f, loss_rand: %.5f, loss_itent:  %.5f" % \

@@ -20,4 +20,5 @@ python main.py \
 --dump_deform_path ./dump_deform/chair/model0 \
 #--dump_deform \
 #--small_dataset \
+#--mode test \
 #--continue_train \
